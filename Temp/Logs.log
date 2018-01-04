@@ -1,0 +1,23 @@
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'column CHAR(1) PRIMARY KEY
+            )' at line 3. 01 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'column CHAR(1) NOT NULL,
+			PRIMARY KEY (problem_id, solution_id, row, column),' at line 7. 01 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'column CHAR(1) NOT NULL,
+			PRIMARY KEY (problem_id, solution_id, row, vertical' at line 7. 01 Jan 2018
+Database error: SQLSTATE[HY000]: General error: 1005 Can't create table `sudoku`.`units` (errno: 150 "Foreign key constraint is incorrectly formed"). 01 Jan 2018
+Database error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'a' in 'field list'. 01 Jan 2018
+Database error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'a' in 'field list'. 01 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1065 Query was empty. 01 Jan 2018
+Database error: SQLSTATE[21S01]: Insert value list does not match column list: 1136 Column count doesn't match value count at row 1. 01 Jan 2018
+Database error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '0' for key 'PRIMARY'. 01 Jan 2018
+Database error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '0' for key 'PRIMARY'. 01 Jan 2018
+Database error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '0' for key 'PRIMARY'. 01 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'PRIMARY KEY,
+			name VARCHAR(60)
+            )' at line 3. 01 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')' at line 6. 01 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ')' at line 6. 01 Jan 2018
+Database error: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`sudoku`.`solutions`, CONSTRAINT `solutions_ibfk_1` FOREIGN KEY (`problem_id`) REFERENCES `problems` (`problem_id`)). 02 Jan 2018
+Database error: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`sudoku`.`solutions`, CONSTRAINT `solutions_ibfk_1` FOREIGN KEY (`problem_id`) REFERENCES `problems` (`problem_id`)). 02 Jan 2018
+Database error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ' ""
+			)' at line 3. 02 Jan 2018

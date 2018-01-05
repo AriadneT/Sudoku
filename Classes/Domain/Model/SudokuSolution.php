@@ -24,7 +24,11 @@ class SudokuSolution extends SudokuProblem
 	 * @param array $sudokuArray
 	 * @return void
 	 */
-	public function saveSudokuSolution($databaseConnection, $problemId, $sudokuArray)
+	public function saveSudokuSolution(
+        $databaseConnection, 
+        $problemId, 
+        $sudokuArray
+    )
 	{
 		$insertSolutionQuery = 'INSERT INTO solutions (problem_id, solution) 
 			VALUES (

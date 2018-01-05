@@ -2,14 +2,14 @@
 class SudokuProblem
 {
 	/**
-     * initial sudoku array
+     * Initial sudoku array
      *
      * @var array
      */
 	private $sudokuArray = [];
 	
 	/**
-     * file name
+     * File name
      *
      * @var string
      */
@@ -145,7 +145,8 @@ class SudokuProblem
 			WHERE problem_id = (
 			SELECT MAX(problem_id) FROM problems
 			);';
-		$getProblemIdStatement = $databaseConnection->query($getProblemIdQuery);
+		$getProblemIdStatement = 
+            $databaseConnection->query($getProblemIdQuery);
 		$problemIdEntry = $getProblemIdStatement->fetchObject();
 		$problemId = $problemIdEntry->problem_id;
 		

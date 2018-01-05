@@ -16,7 +16,7 @@ return [
 		'Classes\Domain\Model\Block.php',
 		'Classes\Domain\Model\Unit.php',
 		'Classes\Domain\Temp\ErrorLogs.php',
-		'Install\DatabasePreparer.php'
+		'Classes\Domain\Database\DatabasePreparer.php'
 	],
 	'databaseParameters' => [
 		'host' => 'localhost',

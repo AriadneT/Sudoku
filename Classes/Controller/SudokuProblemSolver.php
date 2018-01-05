@@ -7,6 +7,14 @@ class SudokuProblemSolver
      * @var string
      */
 	private $solution = '';
+    
+    /**
+     * Array used for more complicated methods comparing two to four cells with 
+     * at least two possible values
+     *
+     * @var string
+     */
+    private $analysisArray = [];
 	
 	/**
      * Returns the solution
@@ -21,11 +29,48 @@ class SudokuProblemSolver
     /**
      * Sets the solution
      *
+	 * @param string $solution
      * @return void
      */
     public function setSolution($solution)
     {
         $this->solution = $solution;
+    }
+    
+    /**
+     * Returns the analysis array
+     *
+     * @return array $analysisArray
+     */
+    public function getAnalysisArray()
+    {
+        return $this->analysisArray;
+    }
+
+    /**
+     * Sets the analysis array
+     *
+	 * @param array $analysisArray
+     * @return void
+     */
+    public function setAnalysisArray($analysisArray)
+    {
+        $this->analysisArray = $analysisArray;
+    }
+	
+	/**
+     * Adds the unit number and possible values to the analysis array
+     *
+	 * @param int $unitNumber
+	 * @param array $possibleValues
+     * @return void
+     */
+    public function addToAnalysisArray($unitNumber, $possibleValues)
+    {
+        array_push(
+			$this->analysisArray, 
+			['position' => $unitNumber, 'possibilities' => $possibleValues]
+		);
     }
 	
 	/**
@@ -54,8 +99,13 @@ class SudokuProblemSolver
 		$sudokuSolutions = $sudokuProblems = [];
 		
 		try {
-			// Create connection to MySQL. Set up database and tables if not yet available.
-			$databaseConnection = prepareDatabase($configurations);
+            /*
+			 * Create connection to MySQL. Set up database and tables if they 
+             * are not yet available.
+             */
+            $database = new DatabasePreparer;
+			$database->prepareDatabase($configurations);
+            $databaseConnection = $database->getDatabaseConnection();
 			
 			foreach ($sudokuFiles as $sudokuFile) {
 				// Prepare sudoku problems for analysis and saving in database
@@ -64,8 +114,10 @@ class SudokuProblemSolver
 				$array = [];
 				for ($position = 0; $position < 100; $position++) {
 					$component = substr($problem, $position, 1);
-					// Avoid newlines
-					if (in_array($component, $configurations['validUnitValues'])) {
+					// Avoid recording newlines
+					if (in_array(
+                        $component, $configurations['validUnitValues']
+                    )) {
 						$array[] = $component;
 					}
 				}
@@ -73,7 +125,7 @@ class SudokuProblemSolver
 				
 				/*
 				 * Only save and try to solve the sudoku if it does not have at  
-				 * least two of a specific number in one row, column and/or block
+				 * least two of a specific number per row, column and/or block
 				 */
 				$groups = $sudokuProblem->groupValues($configurations);
 				if ($sudokuProblem->check($groups)) {
@@ -81,7 +133,7 @@ class SudokuProblemSolver
 					$sudokuProblem->setProblemId($problemId);
 					$sudokuProblems[] = $sudokuProblem;
 					
-					// Sudoku solution initially looks like the relevant problem
+					// Sudoku solution initially identical to the relevant problem
 					$sudokuSolution = new SudokuSolution($array, $problemId, $name);
 					$sudokuSolutions[] = $sudokuSolution;
 				} else {
@@ -126,13 +178,18 @@ class SudokuProblemSolver
 	{
 		$this->setSolution('<!DOCTYPE html><html><body>');
 		foreach ($sudokuSolutions as $sudokuSolution) {
-			$this->setSolution($this->getSolution() . '<table><thead>' . $sudokuSolution->getFileName() . '</thead>');
+			$this->setSolution(
+                $this->getSolution() . '<table><thead>' . 
+                $sudokuSolution->getFileName() . '</thead>'
+            );
 			$counter = 1;
 			foreach ($sudokuSolution->getSudokuArray() as $square) {
 				if ($counter % 9 == 1) {
 					$this->setSolution($this->getSolution() . '<tr>');
 				}
-				$this->setSolution($this->getSolution() . '<td>' . $square . '</td>');
+				$this->setSolution(
+                    $this->getSolution() . '<td>' . $square . '</td>'
+                );
 				if ($counter % 9 == 0) {
 					$this->setSolution($this->getSolution() . '</tr>');
 				}
@@ -305,21 +362,92 @@ class SudokuProblemSolver
 						/*
 						 * If square has a number, remove this number as a 
 						 * possibility from other squares in the box/row/
-						 * column.
+						 * column. This is part of the "Last Possible Number" 
+						 * method.
 						 */
 						if ($unit->getValue() != ' ') {
 							$value = $unit->getValue();
 							foreach ($subgroup as $unit) {
 								$possibleValues = $unit->getPossibleValues();
 								if ($unit->getValue() == ' ' && in_array($value, $possibleValues)) {
-									$key = array_search($value, $possibleValues);
+									$key = 
+                                        array_search($value, $possibleValues);
 									if ($key != false) {
                                         // Remove value from possible values
-                                        $unit->removeValue($possibleValues, $key);
+                                        $unit->removeValue(
+                                            $possibleValues, 
+                                            $key
+                                        );
 										$progress = true;
 									}
 								}
 							}
+						} else {
+							/*
+                             * Check if square has a possible number that is 
+                             * unique in its row, column or block. If so, all 
+                             * other possibilities are removed. This is the 
+							 * "Last Remaining Cell in a Box/Row/Column" method.
+                             */
+                            $possibleValues = $unit->getPossibleValues();
+							$this->setAnalysisArray([]);
+                             
+                            foreach ($possibleValues as $possibleValue) {
+                                $numberWithValue = 0;
+                                 
+                                foreach ($subgroup as $unitForArrayExamination) {
+									$possibilities = $unitForArrayExamination->getPossibleValues();
+                                    if (in_array($possibleValue, $possibilities)) {
+                                        $numberWithValue++;
+										$numberOfPossibilities = 
+											count($possibilities);
+										if ($numberOfPossibilities > 1 && $numberOfPossibilities < 5) {
+											$this->addToAnalysisArray(
+												$unitForArrayExamination->getUnitNumber(), 
+												$possibilities
+											);
+										}	
+                                    }
+                                }
+                                 
+                                if ($numberWithValue == 1) {
+                                    $unit->setPossibleValues([$possibleValue]);
+                                    $unit->setValue($possibleValue);
+                                    $progress = true;
+									 
+									/*
+									 * Without this break, the solution will 
+									 * contain errors
+									 */ 
+                                    break;
+                                } elseif ($numberWithValue > 1 && $numberWithValue < 5) {
+									
+									// "Naked pair" method
+									$pairs = [];
+									foreach ($this->analysisArray as $cell) {
+										if (count($cell['possibilities']) == 2) {
+											$pairs[] = $cell['possibilities'];
+										}
+									}
+									$numberOfPairs = count($pairs);
+									if ($numberOfPairs > 1) {
+										/*
+										 * Comparison of arrays method similar 
+										 * to bubble sort.
+										 */
+										for ($first = 0; $first < $numberOfPairs; $first++) {
+											for($second = 0; $second < $numberOfPairs - $first - 1; $second++) {
+												if ($pairs[$first] == $pairs[$first + 1]) {
+													// For testing
+													var_dump($pairs[$first]);
+													var_dump($pairs[$first + 1]);
+													echo '<br>';
+												}
+											}
+										}
+									}
+								}
+                            }
 						}						
                         
 						/*
@@ -331,37 +459,6 @@ class SudokuProblemSolver
 						}
 					}
 				}
-                
-                foreach ($groupings as $group) {
-                    $subgroup = $group->getMembers();
-                    foreach ($subgroup as $unit) {
-                        if ($unit->getValue() == ' ') {
-                            /*
-                             * Check if square has a possible number that is 
-                             * unique in its row, column or block. If so, all 
-                             * other possibilities are removed.
-                             */
-                             $possibleValues = $unit->getPossibleValues();
-                             
-                             foreach ($possibleValues as $possibleValue) {
-                                 $numberWithValue = 0;
-                                 
-                                 foreach ($subgroup as $unitForArrayExamination) {
-                                     if (in_array($possibleValue, $unitForArrayExamination->getPossibleValues())) {
-                                         $numberWithValue++;
-                                     }
-                                 }
-                                 
-                                 if ($numberWithValue == 1) {
-                                     $unit->setPossibleValues([$possibleValue]);
-                                     $unit->setValue($possibleValue);
-                                     $progress = true;
-                                     break;
-                                 }
-                             }
-                        }
-                    }
-                }
 			}
 		}
 	}
@@ -384,8 +481,11 @@ class SudokuProblemSolver
 					foreach ($solutionArray as $square) {
                         // No need to replace a square that is already filled
                         if ($square == ' ') {
-                            // ceil() returns the next integer if number is a float
                             foreach ($groupings as $group) {
+                                /*
+                                 * ceil() returns the next integer if number is
+                                 * a float
+                                 */
                                 if ($group->getGroupType() == 'row' && $group->getNumber() == ceil($counter / 9)) {
                                     $subgroup = $group->getMembers();
                                     foreach ($subgroup as $unit) {

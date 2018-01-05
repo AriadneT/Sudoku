@@ -48,7 +48,10 @@ class ErrorLog
         return $this->errorMessage;
     }
 	
-	public function __construct()
+	/**
+	 * To instantiate a new error log
+     */
+    public function __construct()
 	{
 	}
 

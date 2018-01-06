@@ -9,12 +9,12 @@ class SudokuProblemSolver
 	private $solution = '';
     
     /**
-     * Array used for more complicated methods comparing two to four cells with 
-     * at least two possible values
+     * Array used for more complicated methods comparing two to three cells  
+     * with two possible values
      *
      * @var string
      */
-    private $analysisArray = [];
+    private $pairs = [];
 	
 	/**
      * Returns the solution
@@ -38,24 +38,23 @@ class SudokuProblemSolver
     }
     
     /**
-     * Returns the analysis array
+     * Returns the pairs array
      *
-     * @return array $analysisArray
+     * @return array $pairs
      */
-    public function getAnalysisArray()
+    public function getPairs()
     {
-        return $this->analysisArray;
+        return $this->pairs;
     }
 
     /**
-     * Sets the analysis array
+     * Empties the pairs array of unit numbers and possible values
      *
-	 * @param array $analysisArray
      * @return void
      */
-    public function setAnalysisArray($analysisArray)
+    public function setPairs($pairs)
     {
-        $this->analysisArray = $analysisArray;
+        $this->pairs = $pairs;
     }
 	
 	/**
@@ -65,10 +64,10 @@ class SudokuProblemSolver
 	 * @param array $possibleValues
      * @return void
      */
-    public function addToAnalysisArray($unitNumber, $possibleValues)
+    public function addToPairs($unitNumber, $possibleValues)
     {
-        array_push(
-			$this->analysisArray, 
+		array_push(
+			$this->pairs, 
 			['position' => $unitNumber, 'possibilities' => $possibleValues]
 		);
     }
@@ -390,7 +389,6 @@ class SudokuProblemSolver
 							 * "Last Remaining Cell in a Box/Row/Column" method.
                              */
                             $possibleValues = $unit->getPossibleValues();
-							$this->setAnalysisArray([]);
                              
                             foreach ($possibleValues as $possibleValue) {
                                 $numberWithValue = 0;
@@ -399,14 +397,6 @@ class SudokuProblemSolver
 									$possibilities = $unitForArrayExamination->getPossibleValues();
                                     if (in_array($possibleValue, $possibilities)) {
                                         $numberWithValue++;
-										$numberOfPossibilities = 
-											count($possibilities);
-										if ($numberOfPossibilities > 1 && $numberOfPossibilities < 5) {
-											$this->addToAnalysisArray(
-												$unitForArrayExamination->getUnitNumber(), 
-												$possibilities
-											);
-										}	
                                     }
                                 }
                                  
@@ -420,33 +410,7 @@ class SudokuProblemSolver
 									 * contain errors
 									 */ 
                                     break;
-                                } elseif ($numberWithValue > 1 && $numberWithValue < 5) {
-									
-									// "Naked pair" method
-									$pairs = [];
-									foreach ($this->analysisArray as $cell) {
-										if (count($cell['possibilities']) == 2) {
-											$pairs[] = $cell['possibilities'];
-										}
-									}
-									$numberOfPairs = count($pairs);
-									if ($numberOfPairs > 1) {
-										/*
-										 * Comparison of arrays method similar 
-										 * to bubble sort.
-										 */
-										for ($first = 0; $first < $numberOfPairs; $first++) {
-											for($second = 0; $second < $numberOfPairs - $first - 1; $second++) {
-												if ($pairs[$first] == $pairs[$first + 1]) {
-													// For testing
-													var_dump($pairs[$first]);
-													var_dump($pairs[$first + 1]);
-													echo '<br>';
-												}
-											}
-										}
-									}
-								}
+                                }
                             }
 						}						
                         
@@ -456,9 +420,18 @@ class SudokuProblemSolver
 						 */
 						if ($unit->getValue() == ' ' && count($unit->getPossibleValues()) == 1) {
 							$unit->setValue($unit->getPossibleValues()[0]);
+							$progress = true;
 						}
 					}
 				}
+				
+				/* 
+				 * "Naked pair" method. It was helpful and perhaps necessary 
+				 * to keep it and other more complex methods separate from 
+				 * other methods to keep them from interfering with each other 
+				 * and causing errors.
+				 */
+				$this->implementNakedPairMethod($groupings, $sudokuProblems);
 			}
 		}
 	}
@@ -507,5 +480,93 @@ class SudokuProblemSolver
 				}
 			}
 		}		
+	}
+	
+	/**
+	 * @param array $groupings
+	 * @param array $sudokuProblems
+	 * @return void
+	 */
+	public function implementNakedPairMethod($groupings, $sudokuProblems)
+	{
+		foreach ($groupings as $group) {
+			$this->setPairs([]);
+			$subgroup = $group->getMembers();
+			
+			foreach ($subgroup as $unit) {
+				$possibleValues = $unit->getPossibleValues();
+				$numberOfPossibilities = count($possibleValues);
+				
+				if ($numberOfPossibilities == 2) {
+					$this->addToPairs(
+						$unit->getUnitNumber(), 
+						$possibleValues
+					);
+				}
+			}
+			$numberOfPairs = count($this->pairs);
+			
+			if ($numberOfPairs > 1) {
+				/*
+				 * Comparison of arrays method similar 
+				 * to bubble sort.
+				 */
+				for ($first = 0; $first < $numberOfPairs; $first++) {
+					for($second = 0; $second < $numberOfPairs - $first - 1; $second++) {
+						$firstPair = 
+							$this->pairs[$second]['possibilities'];
+						$secondPair = 
+							$this->pairs[$second + 1]['possibilities'];
+						if ($firstPair == $secondPair) {
+							$firstCellNumber = 
+								$this->pairs[$second]['position'];
+							$secondCellNumber = 
+								$this->pairs[$second + 1]['position'];
+							
+							/*									
+							 * Remove numbers from naked pair as 
+							 * possibilities in empty units that lack 
+							 * this "naked pair"
+							 */
+							foreach ($firstPair as $pairedNumber) {
+								foreach ($subgroup as $unit) {
+									$cellNumber = 
+										$unit->getUnitNumber();
+									$potentialValues = 
+										$unit->getPossibleValues();
+									
+									if (count($potentialValues) > 1 && $cellNumber != $secondCellNumber) {
+										if ($cellNumber != $firstCellNumber) {
+											if (in_array($pairedNumber, $potentialValues)) {
+												$key = 
+													array_search($pairedNumber, $potentialValues);
+												if ($key != false) {
+													$unit->removeValue($potentialValues, $key);
+													$progress = true;
+													
+													/*
+													 * Testing for the 
+													 * "Naked Pair", as 
+													 * no extra solved  
+													 * cells were 
+													 * observed.
+													 */
+													if ($sudokuProblems[4]) {
+														echo $pairedNumber . ', ';
+														echo $cellNumber . ', ';
+														var_dump($unit->getPossibleValues());
+														echo '<br>';
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }

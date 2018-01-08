@@ -3,9 +3,13 @@ return [
 	'sudokuFiles' => [
 		'../Sudoku/Resources/Public/Sudoku/easy1.sudoku',
 		'../Sudoku/Resources/Public/Sudoku/easy1solution.sudoku',
+		'../Sudoku/Resources/Public/Sudoku/regular1solution.sudoku',
 		'../Sudoku/Resources/Public/Sudoku/regular1.sudoku',
 		'../Sudoku/Resources/Public/Sudoku/difficult1.sudoku',
-		'../Sudoku/Resources/Public/Sudoku/extreme1.sudoku'
+		'../Sudoku/Resources/Public/Sudoku/difficult1solution.sudoku',
+		'../Sudoku/Resources/Public/Sudoku/extreme1.sudoku',
+		'../Sudoku/Resources/Public/Sudoku/extreme1solution.sudoku',
+		'../Sudoku/Resources/Public/Sudoku/false.sudoku'
 	],
 	'phpFiles' => [
 		'Classes\Domain\Model\SudokuProblem.php',

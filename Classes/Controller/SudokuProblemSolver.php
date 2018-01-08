@@ -140,6 +140,10 @@ class SudokuProblemSolver
 		$sudokuFiles = $configurations['sudokuFiles'];
 		$sudokuSolutions = $sudokuProblems = [];
 		
+        /*
+         * Steps requiring database use (and anything in between) in the try/
+         * catch block to allow recording of any database errors
+         */
 		try {
             /*
 			 * Create connection to MySQL. Set up database and tables if they 
@@ -152,6 +156,7 @@ class SudokuProblemSolver
 			foreach ($sudokuFiles as $sudokuFile) {
 				// Prepare sudoku problems for analysis and saving in database
 				$problem = file_get_contents($sudokuFile);
+                // Delete '.sudoku' from file name
 				$name = substr_replace(basename($sudokuFile), '', -7);
 				$array = [];
 				for ($position = 0; $position < 100; $position++) {
@@ -166,7 +171,7 @@ class SudokuProblemSolver
 				$sudokuProblem = new SudokuProblem($array, $name);
 				
 				/*
-				 * Only save and try to solve the sudoku if it does not have at  
+				 * Only save and try to solve the sudoku if it does not have at 
 				 * least two of a specific number per row, column and/or block
 				 */
 				$groups = $sudokuProblem->groupValues($configurations);
@@ -175,7 +180,7 @@ class SudokuProblemSolver
 					$sudokuProblem->setProblemId($problemId);
 					$sudokuProblems[] = $sudokuProblem;
 					
-					// Sudoku solution initially identical to the relevant problem
+					// Solution initially identical to the relevant problem
 					$sudokuSolution = new SudokuSolution($array, $problemId, $name);
 					$sudokuSolutions[] = $sudokuSolution;
 				} else {
@@ -190,23 +195,20 @@ class SudokuProblemSolver
 					
 			// Solve the sudoku as much as possible through logic
 			$this->solveSudokus($sudokuProblems);
-            
-            // Test if any unfilled squares still exist? (May be required for harder problems)
-            
-            // Go systematically through remaining possibilities until sudoku is solved? (May be required for harder problems, especially if some logical methods prove too difficult to program)
 					
 			// Replace missing values in the sudoku solution's array
 			$this->recordSolutions($sudokuProblems, $sudokuSolutions);
 			
 			// Save the sudoku solutions
 			$this->saveSolutions($sudokuSolutions, $databaseConnection);
+            
 		} catch (PDOException $connectionException) {
 			// Log database error
 			$log = new ErrorLog;
 			$log->logError($connectionException);
 		}
 		
-		// Show solution(s) (or at least progress towards it/them)
+		// Show solution(s)
 		$this->setSolution($this->writeSolutions($sudokuSolutions));
 		
 		return $this->solution;
@@ -463,7 +465,13 @@ class SudokuProblemSolver
 						 * possibilities is reduced to one.
 						 */
 						if ($unit->getValue() == ' ' && count($unit->getPossibleValues()) == 1) {
-							$unit->setValue($unit->getPossibleValues()[0]);
+                            /*
+                             * Key is not always 0, even if the array has just
+                             * one value, so using a foreach loop avoids errors
+                             */
+                            foreach ($unit->getPossibleValues() as $justOne) {
+                                $unit->setValue($justOne);
+                            }
 							$progress = true;
 						}
 					}
@@ -479,36 +487,11 @@ class SudokuProblemSolver
 					$this->implementNakedPairMethod($groupings, $progress);
 				
 				/* 
-				 * "Naked triple" method using cells with just two 
-				 * possibilities only
-				 */
-				$progress = 
-					$this->implementPairsNakedTriple($groupings, $progress);
-				
-				/* 
 				 * "Naked triple" method using cells with two to three 
 				 * possibilities
 				 */
 				$progress = 
 					$this->implementTriplesNakedTriple($groupings, $progress);
-				
-				/*
-				 * Testing for the "Naked Pair", as no extra solved cells were 
-				 * observed. Remove at end of project.
-				 */
-				if ($sudokuProblem == $sudokuProblems[4] && $progress == false) {
-					echo 'New round<br>';
-					foreach ($groupings as $group) {
-						if ($group->getGroupType() == 'row') {
-							$subgroup = $group->getMembers();
-							foreach ($subgroup as $unit) {
-								echo $unit->getUnitNumber() . ' ';
-								var_dump($unit->getPossibleValues());
-								echo '<br>';
-							}
-						}
-					}
-				}
 			}
 		}
 	}
@@ -628,53 +611,6 @@ class SudokuProblemSolver
 		
 		return $progress;
 	}
-
-	/**
-	 * Testing showed that adding this function alone to the first three 
-	 * methods will yield no improvements. Its development is therefore set 
-	 * aside for the time being.
-	 *
-	 * @param array $groupings
-	 * @param bool $progress
-	 * @return bool, $progress
-	 */
-	public function implementPairsNakedTriple($groupings, $progress)
-	{
-		foreach ($groupings as $group) {
-			$this->setPairs([]);
-			$subgroup = $group->getMembers();
-			
-			foreach ($subgroup as $unit) {
-				$possibleValues = $unit->getPossibleValues();
-				$numberOfPossibilities = count($possibleValues);
-				
-				if ($numberOfPossibilities == 2) {
-					$this->addToPairs(
-						$unit->getUnitNumber(), 
-						$possibleValues
-					);
-				}
-			}
-			$numberOfPairs = count($this->pairs);
-			
-			if ($numberOfPairs > 2) {
-				for ($first = 0; $first < $numberOfPairs - 2; $first++) {
-					$firstPair = $this->pairs[$first]['possibilities'];
-					for ($second = $first + 1; $second < $numberOfPairs - 1; $second++) {
-						$secondPair = 
-							$this->pairs[$second]['possibilities'];
-						for ($third = $second + 1; $third < $numberOfPairs; $third++) {
-							$thirdPair = 
-								$this->pairs[$third]['possibilities'];
-							// Incomplete
-						}
-					}
-				}
-			}
-		}
-		
-		return $progress;
-	}
 	
 	/**
 	 * @param array $groupings
@@ -711,9 +647,11 @@ class SudokuProblemSolver
 							$thirdGroup = 
 								$this->pairsAndTriples[$third]['possibilities'];
 							
-							// To be implemented
 							if ($firstGroup == $secondGroup && $secondGroup == $thirdGroup) {
-								echo 'Yes!<br>';
+                                /*
+                                 * This version does not need to be implemented 
+                                 * because the sudokus have been solved
+                                 */
 							} elseif ($firstGroup == $secondGroup && count($firstGroup) == 3) {
 								if (count($thirdGroup) == 2) {
 									$commonality = 0;
@@ -778,7 +716,6 @@ class SudokuProblemSolver
 									}
 									
 									if ($commonality == 2) {
-										//echo 'Worth checking out!<br>';
 										$firstCellNumber = 
 											$this->pairsAndTriples[$first]['position'];
 										$secondCellNumber = 
@@ -815,7 +752,6 @@ class SudokuProblemSolver
 											}
 										}
 									}
-									
 								}
 							}
 						}

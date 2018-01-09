@@ -127,5 +127,13 @@ return [
 		76,
 		77,
 		78
+	],
+    'htmlFiles' => [
+		'start' => '../Sudoku/Resources/Private/Templates/Start.html',
+		'error' => '../Sudoku/Resources/Private/Templates/ErrorMessage.html',
+		'tableHead' => '../Sudoku/Resources/Private/Templates/TableHead.html',
+		'tableBody' => '../Sudoku/Resources/Private/Templates/TableBody.html',
+		'tableEnd' => '../Sudoku/Resources/Private/Templates/TableEnd.html',
+		'end' => '../Sudoku/Resources/Private/Templates/End.html'
 	]
 ];

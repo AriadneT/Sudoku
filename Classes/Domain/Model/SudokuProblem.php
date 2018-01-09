@@ -139,7 +139,17 @@ class SudokuProblem
 			"' . $this->fileName . '", "' . implode('', $this->sudokuArray) . '"
 			);';
 		$databaseConnection->query($insertProblemQuery);
-		
+	}
+	
+	/**
+	 * Problem id should be fetched directly after the problem is saved so that 
+	 * the sudoku problem and resulting solution both have the correct id
+	 *
+	 * @param PDO $databaseConnection
+	 * @return int $problemId
+	 */
+	public function fetchProblemId($databaseConnection)
+	{
 		$getProblemIdQuery = 'SELECT problem_id
 			FROM problems 
 			WHERE problem_id = (

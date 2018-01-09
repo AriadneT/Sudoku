@@ -187,12 +187,16 @@ class Unit
     
     /**
 	 * @param array $possibleValues
-	 * @param int $key
+	 * @param int $value
 	 * @return void
 	 */
-	public function removeValue($possibleValues, $key)
+	public function removeValue($possibleValues, $value)
 	{
-		unset($possibleValues[$key]);
-        $this->setPossibleValues($possibleValues);
+		$key = array_search($value, $possibleValues);
+        // !== instead of != to ensure that 0 is not interpreted as false
+		if ($key !== false) {
+            unset($possibleValues[$key]);
+            $this->setPossibleValues($possibleValues);
+        }
 	}
 }

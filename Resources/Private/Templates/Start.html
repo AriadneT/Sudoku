@@ -2,8 +2,111 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Sudoku solutions</title>
+    <title>Sudoku solver</title>
     <link href="../../../../Sudoku/Resources/Public/StyleSheets/App.css" type="text/css" rel="stylesheet">
 </head>
 <body>
-    <h1>Sudoku solutions</h1>
+    <h1>Sudoku solver</h1>
+	<form method="post">
+		<p>Your sudoku:</p>
+		<p>
+			<input type="text" name="cell1" id="cell1" class="box">
+			<input type="text" name="cell2" id="cell2" class="box">
+			<input type="text" name="cell3" id="cell3" class="box">
+			<input type="text" name="cell4" id="cell4" class="box">
+			<input type="text" name="cell5" id="cell5" class="box">
+			<input type="text" name="cell6" id="cell6" class="box">
+			<input type="text" name="cell7" id="cell7" class="box">
+			<input type="text" name="cell8" id="cell8" class="box">
+			<input type="text" name="cell9" id="cell9" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell10" id="cell10" class="box">
+			<input type="text" name="cell11" id="cell11" class="box">
+			<input type="text" name="cell12" id="cell12" class="box">
+			<input type="text" name="cell13" id="cell13" class="box">
+			<input type="text" name="cell14" id="cell14" class="box">
+			<input type="text" name="cell15" id="cell15" class="box">
+			<input type="text" name="cell16" id="cell16" class="box">
+			<input type="text" name="cell17" id="cell17" class="box">
+			<input type="text" name="cell18" id="cell18" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell19" id="cell19" class="box">
+			<input type="text" name="cell20" id="cell20" class="box">
+			<input type="text" name="cell21" id="cell21" class="box">
+			<input type="text" name="cell22" id="cell22" class="box">
+			<input type="text" name="cell23" id="cell23" class="box">
+			<input type="text" name="cell24" id="cell24" class="box">
+			<input type="text" name="cell25" id="cell25" class="box">
+			<input type="text" name="cell26" id="cell26" class="box">
+			<input type="text" name="cell27" id="cell27" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell28" id="cell28" class="box">
+			<input type="text" name="cell29" id="cell29" class="box">
+			<input type="text" name="cell30" id="cell30" class="box">
+			<input type="text" name="cell31" id="cell31" class="box">
+			<input type="text" name="cell32" id="cell32" class="box">
+			<input type="text" name="cell33" id="cell33" class="box">
+			<input type="text" name="cell34" id="cell34" class="box">
+			<input type="text" name="cell35" id="cell35" class="box">
+			<input type="text" name="cell36" id="cell36" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell37" id="cell37" class="box">
+			<input type="text" name="cell38" id="cell38" class="box">
+			<input type="text" name="cell39" id="cell39" class="box">
+			<input type="text" name="cell40" id="cell40" class="box">
+			<input type="text" name="cell41" id="cell41" class="box">
+			<input type="text" name="cell42" id="cell42" class="box">
+			<input type="text" name="cell43" id="cell43" class="box">
+			<input type="text" name="cell44" id="cell44" class="box">
+			<input type="text" name="cell45" id="cell45" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell46" id="cell46" class="box">
+			<input type="text" name="cell47" id="cell47" class="box">
+			<input type="text" name="cell48" id="cell48" class="box">
+			<input type="text" name="cell49" id="cell49" class="box">
+			<input type="text" name="cell50" id="cell50" class="box">
+			<input type="text" name="cell51" id="cell51" class="box">
+			<input type="text" name="cell52" id="cell52" class="box">
+			<input type="text" name="cell53" id="cell53" class="box">
+			<input type="text" name="cell54" id="cell54" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell55" id="cell55" class="box">
+			<input type="text" name="cell56" id="cell56" class="box">
+			<input type="text" name="cell57" id="cell57" class="box">
+			<input type="text" name="cell58" id="cell58" class="box">
+			<input type="text" name="cell59" id="cell59" class="box">
+			<input type="text" name="cell60" id="cell60" class="box">
+			<input type="text" name="cell61" id="cell61" class="box">
+			<input type="text" name="cell62" id="cell62" class="box">
+			<input type="text" name="cell63" id="cell63" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell64" id="cell64" class="box">
+			<input type="text" name="cell65" id="cell65" class="box">
+			<input type="text" name="cell66" id="cell66" class="box">
+			<input type="text" name="cell67" id="cell67" class="box">
+			<input type="text" name="cell68" id="cell68" class="box">
+			<input type="text" name="cell69" id="cell69" class="box">
+			<input type="text" name="cell70" id="cell70" class="box">
+			<input type="text" name="cell71" id="cell71" class="box">
+			<input type="text" name="cell72" id="cell72" class="box">
+		</p>
+		<p>
+			<input type="text" name="cell73" id="cell73" class="box">
+			<input type="text" name="cell74" id="cell74" class="box">
+			<input type="text" name="cell75" id="cell75" class="box">
+			<input type="text" name="cell76" id="cell76" class="box">
+			<input type="text" name="cell77" id="cell77" class="box">
+			<input type="text" name="cell78" id="cell78" class="box">
+			<input type="text" name="cell79" id="cell79" class="box">
+			<input type="text" name="cell80" id="cell80" class="box">
+			<input type="text" name="cell81" id="cell81" class="box">
+		</p>
+		<input type="submit" id="button"></input>
+	</form>

@@ -1,9 +1,63 @@
-table, th, td {
+body {
+	background-color: lightblue;
+}
+
+table {
+	background-color : white;
+}
+
+table, th, td, .box {
     border          : 1px solid black;
     border-collapse : collapse;
 }
 
-td {
+td, .box {
 	width      : 18px;
+	height     : 18px;
 	text-align : center;
+}
+
+form p:nth-child(n+3), table, #button, .errorMessage, 
+form p input:nth-child(n+4):nth-child(-n+9) {
+	position : relative;
+}
+
+form p:nth-child(3) {
+	top : -15px;
+}
+
+form p:nth-child(4) {
+	top : -30px;
+}
+
+form p:nth-child(5) {
+	top : -40px;
+}
+
+form p:nth-child(6) {
+	top : -55px;
+}
+
+form p:nth-child(7) {
+	top : -70px;
+}
+
+form p:nth-child(8) {
+	top : -80px;
+}
+
+form p:nth-child(9) {
+	top : -95px;
+}
+
+form p:nth-child(10), table, #button, .errorMessage {
+	top : -110px;
+}
+
+form p input:nth-child(n+4):nth-child(-n+6) {
+	left : 5px;
+}
+
+form p input:nth-child(n+7):nth-child(-n+9) {
+	left : 10px;
 }

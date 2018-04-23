@@ -7,7 +7,33 @@ class SudokuProblemSolver
      * @var string
      */
 	private $solution = '';
-
+    
+    /**
+     * Array used for more complicated methods comparing two to three cells  
+     * with two possible values
+     *
+     * @var string
+     */
+    private $pairs = [];
+	
+	/**
+     * Array used for more complicated methods comparing three cells with two 
+     * to three possible values
+     *
+     * @var string
+     */
+    private $pairsAndTriples = [];
+	
+	/**
+     * Returns the solution
+     *
+     * @return string $solution
+     */
+    public function getSolution()
+    {
+        return $this->solution;
+    }
+	
     /**
      * Sets the solution
      *
@@ -18,7 +44,77 @@ class SudokuProblemSolver
     {
         $this->solution = $solution;
     }
+	    
+    /**
+     * Returns the pairs array
+     *
+     * @return array $pairs
+     */
+    public function getPairs()
+    {
+        return $this->pairs;
+    }
+
+    /**
+     * Sets the pairs array
+     *
+     * @return void
+     */
+    public function setPairs($pairs)
+    {
+        $this->pairs = $pairs;
+    }
 	
+	/**
+     * Returns the array of pairs and triples
+     *
+     * @return array $pairsAndTriples
+     */
+    public function getPairsAndTriples()
+    {
+        return $this->pairsAndTriples;
+    }
+
+    /**
+     * Sets the array of pairs and triples
+     *
+     * @return void
+     */
+    public function setPairsAndTriples($pairsAndTriples)
+    {
+        $this->pairsAndTriples = $pairsAndTriples;
+    }
+	
+	/**
+     * Adds unit number and possible values to the pairs array
+     *
+	 * @param int $unitNumber
+	 * @param array $possibleValues
+     * @return void
+     */
+    public function addToPairs($unitNumber, $possibleValues)
+    {
+		array_push(
+			$this->pairs, 
+			['position' => $unitNumber, 'possibilities' => $possibleValues]
+		);
+    }
+	
+	/**
+     * Adds unit number and possible values to array of pairs or triples
+     *
+	 * @param int $unitNumber
+	 * @param array $possibleValues
+     * @return void
+     */
+    public function addPairOrTriple($unitNumber, $possibleValues)
+    {
+		array_push(
+			$this->pairsAndTriples, 
+			['position' => $unitNumber, 'possibilities' => $possibleValues]
+		);
+    }
+
 	/**
 	 * To instantiate a new sudoku problem solver
 	 *
@@ -304,6 +400,7 @@ class SudokuProblemSolver
 	public function solveSudokus($sudokuProblems)
 	{
 		foreach ($sudokuProblems as $sudokuProblem) {
+			$groupings = $sudokuProblem->getGroupings();
 			$progress = true;
 			
 			/*
@@ -313,7 +410,6 @@ class SudokuProblemSolver
 			 */
 			while ($progress == true) {
 				$progress = false;
-				$groupings = $sudokuProblem->getGroupings();
 				
 				foreach ($groupings as $group) {
 					$subgroup = $group->getMembers();
@@ -348,6 +444,7 @@ class SudokuProblemSolver
 						 * Set number of empty square if number of 
 						 * possibilities is reduced to one.
 						 */
+						//$this->setSinglePossibilityCell();
 						if ($unit->getValue() == ' ' && count($unit->getPossibleValues()) == 1) {
                             /*
                              * Key is not always 0, even if the array has just
@@ -360,14 +457,27 @@ class SudokuProblemSolver
 						}
 					}
 				}
-				
-				/* 
-				 * "Naked pair" method and part of the "naked triple" method 
-				 * were implemented, but they were later found to be 
-				 * unnecessary for the given sudokus and removed to save lines 
-				 * and make the code easier to follow.
-				 */
 			}
+			
+			/* 
+			 * "Naked pair" method. It was helpful and perhaps necessary 
+			 * to keep it and other more complex methods separate from 
+			 * other methods to keep them from interfering with each other 
+			 * and causing errors.
+			 */
+			/*do {
+				$progress = 
+					$this->implementNakedPairMethod($groupings);
+			} while ($progress == true);*/
+			
+			/* 
+			 * "Naked triple" method using cells with two to three 
+			 * possibilities
+			 */
+			do {
+				$progress = 
+					$this->implementTriplesNakedTriple($groupings);
+			} while ($progress == true);
 		}
 	}
 	
@@ -473,6 +583,77 @@ class SudokuProblemSolver
 	}
 	
 	/**
+ 	 * @param array $groupings
+	 * @return bool $progress
+	 */
+	public function implementNakedPairMethod($groupings)
+	{
+		$progress = false;
+		
+		foreach ($groupings as $group) {
+			$this->setPairs([]);
+			$subgroup = $group->getMembers();
+			
+			foreach ($subgroup as $unit) {
+				$possibleValues = $unit->getPossibleValues();
+				$numberOfPossibilities = count($possibleValues);
+				
+				if ($numberOfPossibilities == 2) {
+					$this->addToPairs(
+						$unit->getUnitNumber(), 
+						$possibleValues
+					);
+				}
+			}
+			$numberOfPairs = count($this->pairs);
+			
+			if ($numberOfPairs > 1) {
+				for ($first = 0; $first < $numberOfPairs - 1; $first++) {
+					$firstPair = $this->pairs[$first]['possibilities'];
+					for ($second = $first + 1; $second < $numberOfPairs; $second++) {
+						$secondPair = 
+							$this->pairs[$second]['possibilities'];
+						if ($firstPair == $secondPair) {
+							$firstCellNumber = 
+								$this->pairs[$first]['position'];
+							$secondCellNumber = 
+								$this->pairs[$second]['position'];
+							
+							/*									
+							 * Remove numbers from naked pair as 
+							 * possibilities in empty units that lack this 
+							 * "naked pair"
+							 */
+							foreach ($firstPair as $pairedNumber) {
+								foreach ($subgroup as $unit) {
+									$cellNumber = $unit->getUnitNumber();
+									$potentialValues = 
+										$unit->getPossibleValues();
+									
+									if (count($potentialValues) > 1 && $cellNumber != $secondCellNumber) {
+										if ($cellNumber != $firstCellNumber) {
+											if (in_array($pairedNumber, $potentialValues)) {
+												$key = 
+													array_search($pairedNumber, $potentialValues);
+												if ($key != false) {
+													$unit->removeValue($potentialValues, $key);
+													$progress = true;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+ 					}
+ 				}
+ 			}
+ 		}
+		
+		return $progress;
+	}
+	
+	/**
 	 * @param array $groupings
 	 * @param int $counter
 	 * @param array $solutionArray
@@ -496,7 +677,158 @@ class SudokuProblemSolver
 		
 		return $solutionArray;
 	}
-        
+    
+	/**
+	 * @param array $groupings
+	 * @return bool $progress
+	 */
+	public function implementTriplesNakedTriple($groupings)
+	{
+		$progress = false;
+		
+		foreach ($groupings as $group) {
+			$this->setPairsAndTriples([]);
+			$subgroup = $group->getMembers();
+			
+			foreach ($subgroup as $unit) {
+				$possibleValues = $unit->getPossibleValues();
+				$numberOfPossibilities = count($possibleValues);
+				
+				if ($numberOfPossibilities > 1 && $numberOfPossibilities < 4) {
+					$this->addPairOrTriple(
+						$unit->getUnitNumber(), 
+						$possibleValues
+					);
+				}
+			}
+			$numberOfSets = count($this->pairsAndTriples);
+			
+			if ($numberOfSets > 2) {
+				for ($first = 0; $first < $numberOfSets - 2; $first++) {
+					$firstGroup = 
+						$this->pairsAndTriples[$first]['possibilities'];
+					for ($second = $first + 1; $second < $numberOfSets - 1; $second++) {
+						$secondGroup = 
+							$this->pairsAndTriples[$second]['possibilities'];
+						for ($third = $second + 1; $third < $numberOfSets; $third++) {
+							$thirdGroup = 
+								$this->pairsAndTriples[$third]['possibilities'];
+							
+							if ($firstGroup == $secondGroup && $secondGroup == $thirdGroup) {
+                                /*
+                                 * This version does not need to be implemented 
+                                 * because the sudokus have been solved
+                                 */
+							} elseif ($firstGroup == $secondGroup && count($firstGroup) == 3) {
+								if (count($thirdGroup) == 2) {
+									$commonality = 0;
+									
+									foreach ($firstGroup as $entry) {
+										foreach ($thirdGroup as $entryNumber) {
+											if ($entry == $entryNumber) {
+												$commonality++;
+											}
+										}
+									}
+									
+									if ($commonality == 2) {
+										$firstCellNumber = 
+											$this->pairsAndTriples[$first]['position'];
+										$secondCellNumber = 
+											$this->pairsAndTriples[$second]['position'];
+										$thirdCellNumber = 
+											$this->pairsAndTriples[$third]['position'];
+										$trio = [
+											$firstCellNumber, 
+											$secondCellNumber,
+											$thirdCellNumber
+											];
+										
+										/*									
+										 * Remove numbers from naked pair as 
+										 * possibilities in empty units that lack this 
+										 * "naked pair"
+										 */
+										foreach ($firstGroup as $entry) {
+											foreach ($subgroup as $unit) {
+												$cellNumber = $unit->getUnitNumber();
+												$potentialValues = 
+													$unit->getPossibleValues();
+												
+												if (count($potentialValues) > 1 && !in_array($cellNumber, $trio)) {
+													if (in_array($entry, $potentialValues)) {
+														$key = 
+															array_search($entry, $potentialValues);
+														if ($key != false) {
+															$unit->removeValue($potentialValues, $key);
+															$progress = true;
+														}
+													}
+												}
+											}
+										}
+									}									
+								}
+							} elseif ($secondGroup == $thirdGroup && count($secondGroup) == 3) {
+								if (count($firstGroup) == 2) {
+									$commonality = 0;
+									
+									foreach ($thirdGroup as $entry) {
+										foreach ($firstGroup as $entryNumber) {
+											if ($entry == $entryNumber) {
+												$commonality++;
+											}
+										}
+									}
+									
+									if ($commonality == 2) {
+										$firstCellNumber = 
+											$this->pairsAndTriples[$first]['position'];
+										$secondCellNumber = 
+											$this->pairsAndTriples[$second]['position'];
+										$thirdCellNumber = 
+											$this->pairsAndTriples[$third]['position'];
+										$trio = [
+											$firstCellNumber, 
+											$secondCellNumber,
+											$thirdCellNumber
+											];
+										
+										/*									
+										 * Remove numbers from naked pair as 
+										 * possibilities in empty units that lack this 
+										 * "naked pair"
+										 */
+										foreach ($thirdGroup as $entry) {
+											foreach ($subgroup as $unit) {
+												$cellNumber = $unit->getUnitNumber();
+												$potentialValues = 
+													$unit->getPossibleValues();
+												
+												if (count($potentialValues) > 1 && !in_array($cellNumber, $trio)) {
+													if (in_array($entry, $potentialValues)) {
+														$key = 
+															array_search($entry, $potentialValues);
+														if ($key != false) {
+															$unit->removeValue($potentialValues, $key);
+															$progress = true;
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return $progress;
+	}
+    
     /**
 	 * @param int $counter
 	 * @param array $groupings

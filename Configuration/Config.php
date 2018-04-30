@@ -1,12 +1,6 @@
 <?php
 return [
 	'sudokuFiles' => [
-		'../Sudoku/Resources/Public/Sudoku/easy1.sudoku',
-		'../Sudoku/Resources/Public/Sudoku/regular1.sudoku',
-		'../Sudoku/Resources/Public/Sudoku/difficult1.sudoku',
-		'../Sudoku/Resources/Public/Sudoku/extreme1.sudoku',
-		'../Sudoku/Resources/Public/Sudoku/extreme1solution.sudoku',
-		'../Sudoku/Resources/Public/Sudoku/leicht.sudoku',
 		'../Sudoku/Resources/Public/Sudoku/schwer.sudoku',
 		'../Sudoku/Resources/Public/Sudoku/false.sudoku'
 	],

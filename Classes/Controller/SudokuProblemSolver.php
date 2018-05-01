@@ -9,7 +9,7 @@ class SudokuProblemSolver
 	private $solution = '';
     
     /**
-     * Array used for more complicated methods comparing two to three cells  
+     * Array used for more complicated methods comparing two to three cells 
      * with two possible values
      *
      * @var string
@@ -411,48 +411,24 @@ class SudokuProblemSolver
 			while ($progress == true) {
 				$progress = false;
 				
+				/*
+				 * The most basic methods "last possible member" and "last 
+				 * remaining cell"
+				 */
+				$progress = $this->implementBasics($groupings, $progress);
+				
 				foreach ($groupings as $group) {
 					$subgroup = $group->getMembers();
 					foreach ($subgroup as $unit) {
 						/*
-						 * If square has a number, remove this number as a 
-						 * possibility from other squares in the box/row/
-						 * column. This is part of the "Last Possible Number" 
-						 * method.
-						 */
-						if ($unit->getValue() != ' ') {
-                            $progress = 
-                                $this->implementLastPossibleMember(
-                                    $unit, 
-                                    $subgroup, 
-                                    $progress
-                                );
-						} else {
-							/*
-                             * Check if square has a possible number that is 
-                             * unique in its row, column or block. If so, all 
-                             * other possibilities are removed.
-                             */
-                            $progress = 
-                                $this->implementLastRemainingCell(
-                                    $unit, 
-                                    $subgroup,
-                                    $progress);
-						}						
-                        
-						/*
 						 * Set number of empty square if number of 
 						 * possibilities is reduced to one.
 						 */
-						if ($unit->getValue() == ' ' && count($unit->getPossibleValues()) == 1) {
-                            /*
-                             * Key is not always 0, even if the array has just
-                             * one value, so using a foreach loop avoids errors
-                             */
-                            foreach ($unit->getPossibleValues() as $justOne) {
-                                $unit->setValue($justOne);
-                            }
-							$progress = true;
+						if ($unit->getValue() == ' ') {
+							$this->checkForSetSquare($unit);
+							if ($unit->getValue() != ' ') {
+								$progress = true;
+							}
 						}
 					}
 				}
@@ -466,94 +442,31 @@ class SudokuProblemSolver
 			 */
 			do {
 				$progress = false;
-				$progress = 
-					$this->implementNakedPairMethod($groupings, 'column', $progress);
-				foreach ($groupings as $group) {
-					$subgroup = $group->getMembers();
-					foreach ($subgroup as $unit) {
-						if ($unit->getValue() != ' ') {
-                            $progress = 
-                                $this->implementLastPossibleMember(
-                                    $unit, 
-                                    $subgroup, 
-                                    $progress
-                                );
-						} else {
-                            $progress = 
-                                $this->implementLastRemainingCell(
-                                    $unit, 
-                                    $subgroup,
-                                    $progress);
-						}
-					}
-				}
-				$progress = 
-					$this->implementNakedPairMethod($groupings, 'row', $progress);
-				foreach ($groupings as $group) {
-					$subgroup = $group->getMembers();
-					foreach ($subgroup as $unit) {
-						if ($unit->getValue() != ' ') {
-                            $progress = 
-                                $this->implementLastPossibleMember(
-                                    $unit, 
-                                    $subgroup, 
-                                    $progress
-                                );
-						} else {
-                            $progress = 
-                                $this->implementLastRemainingCell(
-                                    $unit, 
-                                    $subgroup,
-                                    $progress);
-						}
-					}
-				}
-				$progress = 
-					$this->implementNakedPairMethod($groupings, 'block', $progress);
-				foreach ($groupings as $group) {
-					$subgroup = $group->getMembers();
-					foreach ($subgroup as $unit) {
-						if ($unit->getValue() != ' ') {
-                            $progress = 
-                                $this->implementLastPossibleMember(
-                                    $unit, 
-                                    $subgroup, 
-                                    $progress
-                                );
-						} else {
-                            $progress = 
-                                $this->implementLastRemainingCell(
-                                    $unit, 
-                                    $subgroup,
-                                    $progress);
-						}
-					}
-				}
+				$progress = $this->implementNakedPairMethod(
+					$groupings, 
+					'column', 
+					$progress
+				);
+				$progress = $this->implementBasics($groupings, $progress);
+				$progress = $this->implementNakedPairMethod(
+					$groupings, 
+					'row', 
+					$progress
+				);
+				$progress = $this->implementBasics($groupings, $progress);
+				$progress = $this->implementNakedPairMethod(
+					$groupings, 
+					'block', 
+					$progress
+				);
+				$progress = $this->implementBasics($groupings, $progress);
 				/* 
 				 * "Naked triple" method using cells with two to three 
 				 * possibilities
 				 */
 				$progress = 
 					$this->implementTriplesNakedTriple($groupings, $progress);
-				foreach ($groupings as $group) {
-					$subgroup = $group->getMembers();
-					foreach ($subgroup as $unit) {
-						if ($unit->getValue() != ' ') {
-                            $progress = 
-                                $this->implementLastPossibleMember(
-                                    $unit, 
-                                    $subgroup, 
-                                    $progress
-                                );
-						} else {
-                            $progress = 
-                                $this->implementLastRemainingCell(
-                                    $unit, 
-                                    $subgroup,
-                                    $progress);
-						}
-					}
-				}
+				$progress = $this->implementBasics($groupings, $progress);
 			} while ($progress == true);
 		}
 	}
@@ -634,7 +547,7 @@ class SudokuProblemSolver
 	{
 		foreach ($sudokuProblems as $sudokuProblem) {
 			foreach ($sudokuSolutions as $sudokuSolution) {
-				if ($sudokuProblem->getProblemId() == $sudokuSolution->getProblemId()) {                    
+				if ($sudokuProblem->getProblemId() == $sudokuSolution->getProblemId()) {
                     $groupings = $sudokuProblem->getGroupings();
                     $counter = 1;
                     $solutionArray = $sudokuSolution->getSudokuArray();
@@ -668,7 +581,7 @@ class SudokuProblemSolver
 	public function implementNakedPairMethod($groupings, $category, $progress)
 	{
 		foreach ($groupings as $group) {
-			// Try one type of group to avoid errors.
+			// Try one type of group at a time to avoid errors.
 			if ($group->getGroupType() == $category) {
 				$this->setPairs([]);
 				$subgroup = $group->getMembers();
@@ -711,13 +624,12 @@ class SudokuProblemSolver
 										if (count($potentialValues) > 1 && $cellNumber != $secondCellNumber) {
 											if ($cellNumber != $firstCellNumber) {
 												if (in_array($pairedNumber, $potentialValues)) {
-													$unit->removeValue($potentialValues, $pairedNumber);
+													$unit->removeValue(
+														$potentialValues, 
+														$pairedNumber
+													);
 													$progress = true;
-													if (count($unit->getPossibleValues()) == 1) {
-														foreach ($unit->getPossibleValues() as $justOne) {
-															$unit->setValue($justOne);
-														}
-													}
+													$this->checkForSetSquare($unit);
 												}
 											}
 										}
@@ -840,13 +752,12 @@ class SudokuProblemSolver
 												
 												if (count($potentialValues) > 1 && !in_array($cellNumber, $trio)) {
 													if (in_array($entry, $potentialValues)) {
-														$unit->removeValue($potentialValues, $entry);
+														$unit->removeValue(
+															$potentialValues, 
+															$entry
+														);
 														$progress = true;
-														if (count($unit->getPossibleValues()) == 1) {
-															foreach ($unit->getPossibleValues() as $justOne) {
-																$unit->setValue($justOne);
-															}
-														}
+														$this->checkForSetSquare($unit);
 													}
 												}
 											}
@@ -891,12 +802,12 @@ class SudokuProblemSolver
 												
 												if (count($potentialValues) > 1 && !in_array($cellNumber, $trio)) {
 													if (in_array($entry, $potentialValues)) {
-														$key = 
-															array_search($entry, $potentialValues);
-														if ($key != false) {
-															$unit->removeValue($potentialValues, $key);
-															$progress = true;
-														}
+														$unit->removeValue(
+															$potentialValues, 
+															$entry
+														);
+														$progress = true;
+														$this->checkForSetSquare($unit);
 													}
 												}
 											}
@@ -1009,4 +920,60 @@ class SudokuProblemSolver
             $this->includeInGroup($groupings, $unit, 'block', 9);
         }
     }
+	
+	/**
+	 * @param array $groupings
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function implementBasics($groupings, $progress)
+	{
+		foreach ($groupings as $group) {
+			$subgroup = $group->getMembers();
+			foreach ($subgroup as $unit) {
+				/*
+				 * If square has a number, remove this number as a possibility 
+				 * from other squares in the block/row/column. This is part of 
+				 * the "Last Possible Number" method.
+				 */
+				if ($unit->getValue() != ' ') {
+					$progress = $this->implementLastPossibleMember(
+						$unit, 
+						$subgroup, 
+						$progress
+					);
+				} else {
+					/*
+					 * Check if square has a possible number that is unique in 
+					 * its row, column or block. If so, all other possibilities 
+					 * are removed.
+					 */
+					$progress = $this->implementLastRemainingCell(
+						$unit, 
+						$subgroup,
+						$progress
+					);
+				}						
+			}
+		}
+		
+		return $progress;
+	}
+	
+	/**
+	 * @param object $unit
+	 * @return void
+	 */
+	public function checkForSetSquare($unit)
+	{
+		if (count($unit->getPossibleValues()) == 1) {
+			/*
+			 * Key is not always 0, even if the array has just one value, so 
+			 * using a foreach loop avoids errors
+			 */
+			foreach ($unit->getPossibleValues() as $justOne) {
+				$unit->setValue($justOne);
+			}
+		}
+	}
 }

@@ -1,7 +1,6 @@
 <?php
 return [
 	'sudokuFiles' => [
-		'../Sudoku/Resources/Public/Sudoku/schwer.sudoku',
 		'../Sudoku/Resources/Public/Sudoku/false.sudoku'
 	],
 	'phpFiles' => [
@@ -21,8 +20,20 @@ return [
 		'user' => 'root',
 		'password' =>  ''
 	],
-	'validUnitValues' => [
+	'validFileUnitValues' => [
 		' ',
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9
+	],
+	'validFormUnitValues' => [
+		'',
 		1,
 		2,
 		3,

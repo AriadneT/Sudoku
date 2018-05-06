@@ -143,6 +143,27 @@ class SudokuProblemSolver
 			file_get_contents($configurations['htmlFiles']['start'])
 		);
 		
+		for ($box = 1; $box < 82; $box++) {
+			$fieldId = 'cell' . (string)$box;
+			
+			if (isset($_POST[$fieldId])) {
+				$cell = $_POST[$fieldId];
+				if (!in_array($cell, $configurations['validFormUnitValues'])) {
+					// On-screen error message
+					$this->setSolution(
+						$this->solution . 
+						file_get_contents(
+							$configurations['htmlFiles']['error']
+						)
+					);
+					$this->setSolution(
+						str_replace('#FILE#', 'Your entry', $this->solution)
+					);
+					break;
+				}
+			}
+		}
+		
         /*
          * Steps requiring database use (and anything in between) in the try/
          * catch block to allow recording of any database errors
@@ -183,7 +204,6 @@ class SudokuProblemSolver
 						new SudokuSolution($array, $problemId, $name);
 					$sudokuSolutions[] = $sudokuSolution;
 				} else {
-                    // On-screen error message
 					$this->setSolution(
 						$this->solution . 
 						file_get_contents(
@@ -241,7 +261,7 @@ class SudokuProblemSolver
             $component = substr($problem, $position, 1);
             // Avoid recording newlines
             if (in_array(
-                $component, $configurations['validUnitValues']
+                $component, $configurations['validFileUnitValues']
             )) {
                 $array[] = $component;
             }

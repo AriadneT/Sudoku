@@ -143,6 +143,7 @@ class SudokuProblemSolver
 			file_get_contents($configurations['htmlFiles']['start'])
 		);
 		
+		$sudokuFromForm = '';
 		for ($box = 1; $box < 82; $box++) {
 			$fieldId = 'cell' . (string)$box;
 			
@@ -160,8 +161,19 @@ class SudokuProblemSolver
 						str_replace('#FILE#', 'Your entry', $this->solution)
 					);
 					break;
+				} else {
+					if ($cell == '') {
+						$cell = ' ';
+					}
+					$numberAsString = (string)$cell;
+					$sudokuFromForm .= $numberAsString;
 				}
+			} else {
+				$sudokuFromForm .= ' ';
 			}
+		}
+		if ($sudokuFromForm != '                                                                                 ') {
+			echo $sudokuFromForm;
 		}
 		
         /*

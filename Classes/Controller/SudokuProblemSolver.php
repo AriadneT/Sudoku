@@ -143,37 +143,21 @@ class SudokuProblemSolver
 			file_get_contents($configurations['htmlFiles']['start'])
 		);
 		
-		$sudokuFromForm = '';
-		for ($box = 1; $box < 82; $box++) {
-			$fieldId = 'cell' . (string)$box;
+		$stringFromForm = $this->prepareProblemString($configurations);
+		
+		// Process if user entered a sudoku in the form
+		if ($stringFromForm != '                                                                                 ') {
+			$arrayFromForm = 
+				$this->prepareProblemArray($stringFromForm, $configurations);
 			
-			if (isset($_POST[$fieldId])) {
-				$cell = $_POST[$fieldId];
-				if (!in_array($cell, $configurations['validFormUnitValues'])) {
-					// On-screen error message
-					$this->setSolution(
-						$this->solution . 
-						file_get_contents(
-							$configurations['htmlFiles']['error']
-						)
-					);
-					$this->setSolution(
-						str_replace('#FILE#', 'Your entry', $this->solution)
-					);
-					break;
-				} else {
-					if ($cell == '') {
-						$cell = ' ';
-					}
-					$numberAsString = (string)$cell;
-					$sudokuFromForm .= $numberAsString;
-				}
-			} else {
-				$sudokuFromForm .= ' ';
-			}
-		}
-		if ($sudokuFromForm != '                                                                                 ') {
-			echo $sudokuFromForm;
+			$sudokuFromForm = 
+				new SudokuProblem($arrayFromForm, 'entry of user');
+			
+			/*
+			 * Only save and try to solve the sudoku if it does not have at 
+			 * least two of a specific number per row, column and/or block
+			 */
+			$groupsFromForm = $sudokuFromForm->groupValues($configurations);
 		}
 		
         /*
@@ -199,10 +183,6 @@ class SudokuProblemSolver
 				
 				$sudokuProblem = new SudokuProblem($array, $name);
 				
-				/*
-				 * Only save and try to solve the sudoku if it does not have at 
-				 * least two of a specific number per row, column and/or block
-				 */
 				$groups = $sudokuProblem->groupValues($configurations);
 				if ($sudokuProblem->check($groups)) {
 					$sudokuProblem->saveSudoku($databaseConnection);
@@ -216,18 +196,9 @@ class SudokuProblemSolver
 						new SudokuSolution($array, $problemId, $name);
 					$sudokuSolutions[] = $sudokuSolution;
 				} else {
-					$this->setSolution(
-						$this->solution . 
-						file_get_contents(
-							$configurations['htmlFiles']['error']
-						)
-					);
-					$this->setSolution(
-						str_replace(
-							'#FILE#', 
-							$sudokuProblem->getFileName(), 
-							$this->solution
-						)
+					$this->showErrorMessage(
+						$sudokuProblem->getFileName(), 
+						$configurations
 					);
 				}				
 			}
@@ -1007,5 +978,50 @@ class SudokuProblemSolver
 				$unit->setValue($justOne);
 			}
 		}
+	}
+	
+	/**
+	 * @param string $title
+	 * @param array $configurations
+	 * @return void
+	 */
+	public function showErrorMessage($title, $configurations)
+	{
+		$this->setSolution(
+			$this->solution . 
+			file_get_contents($configurations['htmlFiles']['error'])
+		);
+		$this->setSolution(str_replace('#FILE#', $title, $this->solution));
+	}
+	
+	/**
+	 * @param array $configurations
+	 * @return string $stringFromForm
+	 */
+	public function prepareProblemString($configurations)
+	{
+		$stringFromForm = '';
+		for ($box = 1; $box < 82; $box++) {
+			$fieldId = 'cell' . (string)$box;
+			
+			if (isset($_POST[$fieldId])) {
+				$cell = $_POST[$fieldId];
+				if (!in_array($cell, $configurations['validFormUnitValues'])) {
+					// On-screen error message
+					$this->showErrorMessage('Your entry', $configurations);
+					break;
+				} else {
+					if ($cell == '') {
+						$cell = ' ';
+					}
+					$numberAsString = (string)$cell;
+					$stringFromForm .= $numberAsString;
+				}
+			} else {
+				$stringFromForm .= ' ';
+			}
+		}
+		
+		return $stringFromForm;
 	}
 }

@@ -145,22 +145,7 @@ class SudokuProblemSolver
 		
 		$stringFromForm = $this->prepareProblemString($configurations);
 		
-		// Process if user entered a sudoku in the form
-		if ($stringFromForm != '                                                                                 ') {
-			$arrayFromForm = 
-				$this->prepareProblemArray($stringFromForm, $configurations);
-			
-			$sudokuFromForm = 
-				new SudokuProblem($arrayFromForm, 'entry of user');
-			
-			/*
-			 * Only save and try to solve the sudoku if it does not have at 
-			 * least two of a specific number per row, column and/or block
-			 */
-			$groupsFromForm = $sudokuFromForm->groupValues($configurations);
-		}
-		
-        /*
+		/*
          * Steps requiring database use (and anything in between) in the try/
          * catch block to allow recording of any database errors
          */
@@ -173,6 +158,40 @@ class SudokuProblemSolver
 			$database->prepareDatabase($configurations);
             $databaseConnection = $database->getDatabaseConnection();
 			
+			// Process if user entered a sudoku in the form
+			if ($stringFromForm != '                                                                                 ') {
+				$arrayFromForm = 
+					$this->prepareProblemArray($stringFromForm, $configurations);
+				
+				$sudokuFromForm = 
+					new SudokuProblem($arrayFromForm, 'entry of user');
+				
+				/*
+				 * Only save and try to solve the sudoku if it does not have at 
+				 * least two of a specific number per row, column and/or block
+				 */
+				$groupsFromForm = 
+					$sudokuFromForm->groupValues($configurations);
+				if ($sudokuFromForm->check($groupsFromForm)) {
+					$sudokuFromForm->saveSudoku($databaseConnection);
+					$problemId = 
+						$sudokuFromForm->fetchProblemId($databaseConnection);
+					$sudokuFromForm->setProblemId($problemId);
+					$sudokuProblems[] = $sudokuFromForm;
+					
+					// Solution initially identical to the relevant problem
+					$solutionFromForm = 
+						new SudokuSolution(
+							$arrayFromForm, 
+							$problemId, 
+							'entry of user'
+						);
+					$sudokuSolutions[] = $solutionFromForm;
+				} else {
+					$this->showErrorMessage('Your entry', $configurations);
+				}
+			}
+
 			foreach ($sudokuFiles as $sudokuFile) {
 				// Prepare sudoku problems for analysis and saving in database
 				$problem = file_get_contents($sudokuFile);
@@ -190,8 +209,6 @@ class SudokuProblemSolver
                         $sudokuProblem->fetchProblemId($databaseConnection);
 					$sudokuProblem->setProblemId($problemId);
 					$sudokuProblems[] = $sudokuProblem;
-					
-					// Solution initially identical to the relevant problem
 					$sudokuSolution = 
 						new SudokuSolution($array, $problemId, $name);
 					$sudokuSolutions[] = $sudokuSolution;

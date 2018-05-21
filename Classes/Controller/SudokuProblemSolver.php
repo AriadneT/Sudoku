@@ -12,7 +12,7 @@ class SudokuProblemSolver
      * Array used for more complicated methods comparing two to three cells 
      * with two possible values
      *
-     * @var string
+     * @var array
      */
     private $pairs = [];
 	
@@ -20,9 +20,17 @@ class SudokuProblemSolver
      * Array used for more complicated methods comparing three cells with two 
      * to three possible values
      *
-     * @var string
+     * @var array
      */
     private $pairsAndTriples = [];
+	
+	/**
+     * Array used for more complicated methods comparing multiple cells with 
+     * two or more possible values
+     *
+     * @var array
+     */
+	private $multiples = [];
 	
 	/**
      * Returns the solution
@@ -86,6 +94,26 @@ class SudokuProblemSolver
     }
 	
 	/**
+     * Returns the array of multiple possibilities
+     *
+     * @return array $multiples
+     */
+    public function getMultiples()
+    {
+        return $this->multiples;
+    }
+
+    /**
+     * Sets the array of multiple possibilities
+     *
+     * @return void
+     */
+    public function setMultiples($multiples)
+    {
+        $this->multiples = $multiples;
+    }
+	
+	/**
      * Adds unit number and possible values to the pairs array
      *
 	 * @param int $unitNumber
@@ -111,6 +139,21 @@ class SudokuProblemSolver
     {
 		array_push(
 			$this->pairsAndTriples, 
+			['position' => $unitNumber, 'possibilities' => $possibleValues]
+		);
+    }
+	
+	/**
+     * Adds unit number and possible values to array of multiple possibilities
+     *
+	 * @param int $unitNumber
+	 * @param array $possibleValues
+     * @return void
+     */
+    public function addMultiple($unitNumber, $possibleValues)
+    {
+		array_push(
+			$this->multiples, 
 			['position' => $unitNumber, 'possibilities' => $possibleValues]
 		);
     }
@@ -480,12 +523,17 @@ class SudokuProblemSolver
 					$progress
 				);
 				$progress = $this->implementBasics($groupings, $progress);
+				
 				/* 
 				 * "Naked triple" method using cells with two to three 
 				 * possibilities
 				 */
 				$progress = 
 					$this->implementTriplesNakedTriple($groupings, $progress);
+				$progress = $this->implementBasics($groupings, $progress);
+				
+				// "Hidden pairs" method
+				$progress = $this->implementHiddenPairs($groupings, $progress);
 				$progress = $this->implementBasics($groupings, $progress);
 			} while ($progress == true);
 		}
@@ -1040,5 +1088,96 @@ class SudokuProblemSolver
 		}
 		
 		return $stringFromForm;
+	}
+	
+	/**
+	 * @param array $groupings
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function implementHiddenPairs($groupings, $progress)
+	{
+		foreach ($groupings as $group) {
+			$subgroup = $group->getMembers();
+			$this->setMultiples([]);
+			
+			foreach ($subgroup as $unit) {
+				$possibleValues = $unit->getPossibleValues();
+				$numberOfPossibilities = count($possibleValues);
+				
+				// Collect possibilities
+				if ($numberOfPossibilities > 1) {
+					$this->addMultiple(
+						$unit->getUnitNumber(), 
+						$possibleValues
+					);
+				}
+			}
+			// Find hidden pairs
+			$numberOfMultiples = count($this->multiples);
+			
+			if ($numberOfMultiples > 1) {
+				$pairsArray = [];
+				$this->setPairs([]);
+				
+				for ($possibleNumber = 1; $possibleNumber < 10; $possibleNumber++) {
+					$numberOfTimes = $firstCell = $secondCell = 0;
+					
+					for ($cell = 0; $cell < $numberOfMultiples; $cell++) {
+						if (in_array($possibleNumber, $this->multiples[$cell]['possibilities'])) {
+							switch ($numberOfTimes) {
+								case 0:
+									$numberOfTimes++;
+									$firstCell = 
+										$this->multiples[$cell]['position'];
+									break;
+								case 1:
+									$numberOfTimes++;
+									$secondCell = 
+										$this->multiples[$cell]['position'];
+									break;
+								case 2:
+									$numberOfTimes++;
+									break;
+								default:
+									break 2;
+							}
+						}
+					}
+					
+					if ($numberOfTimes == 2) {
+						
+						if ($pairsArray == []) {
+							$pairsArray[$possibleNumber] = [$firstCell, $secondCell];
+							var_dump($pairsArray);
+							echo '<br>';
+						} else {
+							$hiddenPairFound = false;
+							
+							for ($pairsIndex = 1; $pairsIndex < $possibleNumber; $pairsIndex++) {
+								if (array_key_exists($pairsIndex, $pairsArray)) {
+									if (($pairsArray[$pairsIndex][0] == $firstCell) && ($pairsArray[$pairsIndex][1] == $secondCell)) {
+										// Save both
+										echo $pairsArray[$pairsIndex][0] . ', ';
+										echo $firstCell . ', ';
+										echo $pairsArray[$pairsIndex][1] . ', ';
+										echo $secondCell . ', ';
+										echo $possibleNumber . '<br>';
+										$hiddenPairFound = true;
+									}
+								}
+							}
+							if ($hiddenPairFound == false) {
+								$pairsArray[$possibleNumber] = [$firstCell, $secondCell];
+							}
+						}
+					}
+				}
+			}
+			
+			// Eliminate other possibilities in cells with hidden pair
+		}
+		
+		return $progress;
 	}
 }

@@ -449,9 +449,19 @@ class SudokuProblemSolver
         foreach ($groupings as $group) {
             if ($group->getGroupType() == $groupType && $group->getNumber() == $number) {
                 $group->addMember($unit);
-                // Units should contain their row, column and block number
-                $unit->setBoxNumber($number);
-                break;
+				
+				// Units should contain their row, column and block number
+				switch ($groupType) {
+					case 'row':
+						$unit->setRowNumber($number);
+						break 2;
+					case 'column':
+						$unit->setColumnNumber($number);
+						break 2;
+					default:
+						$unit->setBoxNumber($number);
+						break;
+				}
             }
         }
     }
@@ -534,6 +544,10 @@ class SudokuProblemSolver
 				
 				// "Hidden pairs" method
 				$progress = $this->implementHiddenPairs($groupings, $progress);
+				$progress = $this->implementBasics($groupings, $progress);
+				
+				// "Pointing pairs" method
+				$progress = $this->implementPointingPairs($groupings, $progress);
 				$progress = $this->implementBasics($groupings, $progress);
 			} while ($progress == true);
 		}
@@ -1118,7 +1132,6 @@ class SudokuProblemSolver
 			
 			if ($numberOfMultiples > 1) {
 				$pairsArray = [];
-				$this->setPairs([]);
 				
 				for ($possibleNumber = 1; $possibleNumber < 10; $possibleNumber++) {
 					$numberOfTimes = $firstCell = $secondCell = 0;
@@ -1146,38 +1159,73 @@ class SudokuProblemSolver
 					}
 					
 					if ($numberOfTimes == 2) {
+						$this->setPairs([]);
 						
 						if ($pairsArray == []) {
-							$pairsArray[$possibleNumber] = [$firstCell, $secondCell];
-							var_dump($pairsArray);
-							echo '<br>';
+							$pairsArray[$possibleNumber] = 
+								[$firstCell, $secondCell];
 						} else {
 							$hiddenPairFound = false;
 							
 							for ($pairsIndex = 1; $pairsIndex < $possibleNumber; $pairsIndex++) {
 								if (array_key_exists($pairsIndex, $pairsArray)) {
 									if (($pairsArray[$pairsIndex][0] == $firstCell) && ($pairsArray[$pairsIndex][1] == $secondCell)) {
-										// Save both
-										echo $pairsArray[$pairsIndex][0] . ', ';
-										echo $firstCell . ', ';
-										echo $pairsArray[$pairsIndex][1] . ', ';
-										echo $secondCell . ', ';
-										echo $possibleNumber . '<br>';
+										// Save hidden pairs and their cells
+										$this->addToPairs(
+											$firstCell, 
+											[$pairsIndex, $possibleNumber]
+										);
+										$this->addToPairs(
+											$secondCell, 
+											[$pairsIndex, $possibleNumber]
+										);
 										$hiddenPairFound = true;
 									}
 								}
 							}
 							if ($hiddenPairFound == false) {
-								$pairsArray[$possibleNumber] = [$firstCell, $secondCell];
+								$pairsArray[$possibleNumber] = 
+									[$firstCell, $secondCell];
+							}
+						}
+						
+						// Eliminate other possibilities in cells with hidden pair
+						foreach ($subgroup as $unit) {
+							if ($this->pairs != []) {
+								$numberOfUnit = $unit->getUnitNumber();
+							
+								if ($numberOfUnit == $this->pairs[0]['position'] || $numberOfUnit == $this->pairs[1]['position']) {
+									$potentialValues = 
+										$unit->getPossibleValues();
+									foreach ($potentialValues as $possibility) {
+										if ($possibility != $this->pairs[0]['possibilities'][0] && $possibility != $this->pairs[1]['possibilities'][1]) {
+											$unit->removeValue(
+												$potentialValues, 
+												$possibility
+											);
+											$progress = true;
+										}
+									}
+								}
 							}
 						}
 					}
 				}
 			}
-			
-			// Eliminate other possibilities in cells with hidden pair
 		}
 		
+		return $progress;
+	}
+	
+	/**
+	 * @param array $groupings
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function implementPointingPairs($groupings, $progress) {
+		foreach ($groupings as $group) {
+			$subgroup = $group->getMembers();
+		}
 		return $progress;
 	}
 }

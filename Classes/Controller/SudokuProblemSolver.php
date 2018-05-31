@@ -546,8 +546,9 @@ class SudokuProblemSolver
 				$progress = $this->implementHiddenPairs($groupings, $progress);
 				$progress = $this->implementBasics($groupings, $progress);
 				
-				// "Pointing pairs" method
-				$progress = $this->implementPointingPairs($groupings, $progress);
+				// "Pointing pairs" and "box line reduction" methods
+				$progress = 
+					$this->implementIntersectionRemoval($groupings, $progress);
 				$progress = $this->implementBasics($groupings, $progress);
 			} while ($progress == true);
 		}
@@ -1222,10 +1223,161 @@ class SudokuProblemSolver
 	 * @param bool $progress
 	 * @return bool $progress
 	 */
-	public function implementPointingPairs($groupings, $progress) {
+	public function implementIntersectionRemoval($groupings, $progress) {
 		foreach ($groupings as $group) {
 			$subgroup = $group->getMembers();
+			$this->setMultiples([]);
+			
+			foreach ($subgroup as $unit) {
+				$possibleValues = $unit->getPossibleValues();
+				$numberOfPossibilities = count($possibleValues);
+				
+				// Collect possibilities
+				if ($numberOfPossibilities > 1) {
+					$this->multiples[] = $unit;
+				}
+			}
+			$numberOfMultiples = count($this->multiples);
+			
+			if ($numberOfMultiples > 1) {
+				switch ($group->getGroupType()) {
+					case 'block':
+						$progress = 
+							$this->implementPointingPairs(
+								$groupings, 
+								$numberOfMultiples, 
+								$progress
+							);
+						break;
+					case 'row':
+						$progress = 
+							$this->implementBoxRowReduction(
+								$groupings, 
+								$numberOfMultiples, 
+								$progress
+							);
+						break;
+					default: 
+						$progress = 
+							$this->implementBoxColumnReduction(
+								$groupings, 
+								$numberOfMultiples, 
+								$progress
+							);
+				}
+			}
 		}
+		
+		return $progress;
+	}
+	
+	/**
+	 * @param array $groupings
+	 * @param int $numberOfMultiples
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function implementPointingPairs($groupings, $numberOfMultiples, $progress) {
+		// Find pointing pairs
+		for ($possibleNumber = 1; $possibleNumber < 10; $possibleNumber++) {
+			$numberOfTimes = 0;
+			$firstCell = $secondCell = null;
+			
+			for ($cell = 0; $cell < $numberOfMultiples; $cell++) {
+				if (in_array($possibleNumber, $this->multiples[$cell]->getPossibleValues())) {
+					switch ($numberOfTimes) {
+						case 0:
+							$numberOfTimes++;
+							$firstCell = $this->multiples[$cell];
+							break;
+						case 1:
+							$numberOfTimes++;
+							$secondCell = $this->multiples[$cell];
+							break;
+						case 2:
+							$numberOfTimes++;
+							break;
+						default:
+							break 2;
+					}
+				}
+			}
+			
+			if ($numberOfTimes == 2) {
+				// Check if pair is in same row/column
+				if ($firstCell->getRowNumber() == $secondCell->getRowNumber()) {
+					$rowNumber = $firstCell->getRowNumber();
+					foreach ($groupings as $group) {
+						if ($group->getGroupType() == 'row' && $group->getNumber() == $rowNumber) {
+							$subgroup = $group->getMembers();
+
+							foreach ($subgroup as $unit) {
+								if ($unit != $firstCell && $unit != $secondCell) {
+									$potentialValues = 
+										$unit->getPossibleValues();
+										
+									/*
+									 * If yes, remove pair from 
+									 * remaining cells in row/
+									 * column
+									 */
+									if (in_array($possibleNumber, $potentialValues)) {
+										$unit->removeValue(
+											$potentialValues, 
+											$possibleNumber
+										);
+									}
+								}
+							}
+						}
+					}
+				} elseif ($firstCell->getColumnNumber() == $secondCell->getColumnNumber()) {
+					$columnNumber = $firstCell->getColumnNumber();
+					foreach ($groupings as $group) {
+						if ($group->getGroupType() == 'column' && $group->getNumber() == $columnNumber) {
+							$subgroup = $group->getMembers();
+
+							foreach ($subgroup as $unit) {
+								if ($unit != $firstCell && $unit != $secondCell) {
+									$potentialValues = 
+										$unit->getPossibleValues();
+										
+									if (in_array($possibleNumber, $potentialValues)) {
+										$unit->removeValue(
+											$potentialValues, 
+											$possibleNumber
+										);
+										$this->checkForSetSquare($unit);
+										$progress = true;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return $progress;
+	}
+	
+	/**
+	 * @param array $groupings
+	 * @param int $numberOfMultiples
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function implementBoxRowReduction($groupings, $numberOfMultiples, $progress) {
+		return $progress;
+	}
+	
+	/**
+	 * @param array $groupings
+	 * @param int $numberOfMultiples
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function implementBoxColumnReduction($groupings, $numberOfMultiples, $progress) {
 		return $progress;
 	}
 }

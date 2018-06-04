@@ -1326,6 +1326,8 @@ class SudokuProblemSolver
 											$potentialValues, 
 											$possibleNumber
 										);
+										$this->checkForSetSquare($unit);
+										$progress = true;
 									}
 								}
 							}
@@ -1368,6 +1370,66 @@ class SudokuProblemSolver
 	 * @return bool $progress
 	 */
 	public function implementBoxRowReduction($groupings, $numberOfMultiples, $progress) {
+		// Find pairs
+		for ($possibleNumber = 1; $possibleNumber < 10; $possibleNumber++) {
+			$numberOfTimes = 0;
+			$firstCell = $secondCell = null;
+			
+			for ($cell = 0; $cell < $numberOfMultiples; $cell++) {
+				if (in_array($possibleNumber, $this->multiples[$cell]->getPossibleValues())) {
+					switch ($numberOfTimes) {
+						case 0:
+							$numberOfTimes++;
+							$firstCell = $this->multiples[$cell];
+							break;
+						case 1:
+							$numberOfTimes++;
+							$secondCell = $this->multiples[$cell];
+							break;
+						case 2:
+							$numberOfTimes++;
+							break;
+						default:
+							break 2;
+					}
+				}
+			}
+			
+			if ($numberOfTimes == 2) {
+				// Check if pair is in same box
+				if ($firstCell->getBoxNumber() == $secondCell->getBoxNumber()) {
+					$boxNumber = $firstCell->getBoxNumber();
+					
+					foreach ($groupings as $group) {
+						if ($group->getGroupType() == 'block' && $group->getNumber() == $boxNumber) {
+							$subgroup = $group->getMembers();
+
+							foreach ($subgroup as $unit) {
+								if ($unit != $firstCell && $unit != $secondCell) {
+									$potentialValues = 
+										$unit->getPossibleValues();
+										
+									/*
+									 * If yes, remove pair from 
+									 * remaining cells in row/
+									 * column
+									 */
+									if (in_array($possibleNumber, $potentialValues)) {
+										$unit->removeValue(
+											$potentialValues, 
+											$possibleNumber
+										);
+										$this->checkForSetSquare($unit);
+										$progress = true;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
 		return $progress;
 	}
 	
@@ -1378,6 +1440,63 @@ class SudokuProblemSolver
 	 * @return bool $progress
 	 */
 	public function implementBoxColumnReduction($groupings, $numberOfMultiples, $progress) {
+		for ($possibleNumber = 1; $possibleNumber < 10; $possibleNumber++) {
+			$numberOfTimes = 0;
+			$firstCell = $secondCell = null;
+			
+			for ($cell = 0; $cell < $numberOfMultiples; $cell++) {
+				if (in_array($possibleNumber, $this->multiples[$cell]->getPossibleValues())) {
+					switch ($numberOfTimes) {
+						case 0:
+							$numberOfTimes++;
+							$firstCell = $this->multiples[$cell];
+							break;
+						case 1:
+							$numberOfTimes++;
+							$secondCell = $this->multiples[$cell];
+							break;
+						case 2:
+							$numberOfTimes++;
+							break;
+						default:
+							break 2;
+					}
+				}
+			}
+			
+			if ($numberOfTimes == 2) {
+				if ($firstCell->getBoxNumber() == $secondCell->getBoxNumber()) {
+					$boxNumber = $firstCell->getBoxNumber();
+					
+					foreach ($groupings as $group) {
+						if ($group->getGroupType() == 'block' && $group->getNumber() == $boxNumber) {
+							$subgroup = $group->getMembers();
+
+							foreach ($subgroup as $unit) {
+								if ($unit != $firstCell && $unit != $secondCell) {
+									$potentialValues = 
+										$unit->getPossibleValues();
+										
+									/*
+									 * If yes, remove pair from 
+									 * remaining cells in row/
+									 * column
+									 */
+									if (in_array($possibleNumber, $potentialValues)) {
+										$unit->removeValue(
+											$potentialValues, 
+											$possibleNumber
+										);
+										$this->checkForSetSquare($unit);
+										$progress = true;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		return $progress;
 	}
 }

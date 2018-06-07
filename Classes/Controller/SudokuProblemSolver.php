@@ -1307,51 +1307,40 @@ class SudokuProblemSolver
 				// Check if pair is in same row/column
 				if ($firstCell->getRowNumber() == $secondCell->getRowNumber()) {
 					$rowNumber = $firstCell->getRowNumber();
+					
 					foreach ($groupings as $group) {
 						if ($group->getGroupType() == 'row' && $group->getNumber() == $rowNumber) {
 							$subgroup = $group->getMembers();
 
 							foreach ($subgroup as $unit) {
 								if ($unit != $firstCell && $unit != $secondCell) {
-									$potentialValues = 
-										$unit->getPossibleValues();
-										
 									/*
-									 * If yes, remove pair from 
-									 * remaining cells in row/
-									 * column
+									 * If yes, remove pair from remaining cells 
+									 * in row/column
 									 */
-									if (in_array($possibleNumber, $potentialValues)) {
-										$unit->removeValue(
-											$potentialValues, 
-											$possibleNumber
-										);
-										$this->checkForSetSquare($unit);
-										$progress = true;
-									}
+									$progress = $this->removeValue(
+										$unit, 
+										$possibleNumber, 
+										$progress
+									);
 								}
 							}
 						}
 					}
 				} elseif ($firstCell->getColumnNumber() == $secondCell->getColumnNumber()) {
 					$columnNumber = $firstCell->getColumnNumber();
+					
 					foreach ($groupings as $group) {
 						if ($group->getGroupType() == 'column' && $group->getNumber() == $columnNumber) {
 							$subgroup = $group->getMembers();
 
 							foreach ($subgroup as $unit) {
 								if ($unit != $firstCell && $unit != $secondCell) {
-									$potentialValues = 
-										$unit->getPossibleValues();
-										
-									if (in_array($possibleNumber, $potentialValues)) {
-										$unit->removeValue(
-											$potentialValues, 
-											$possibleNumber
-										);
-										$this->checkForSetSquare($unit);
-										$progress = true;
-									}
+									$progress = $this->removeValue(
+										$unit, 
+										$possibleNumber, 
+										$progress
+									);
 								}
 							}
 						}
@@ -1406,22 +1395,11 @@ class SudokuProblemSolver
 
 							foreach ($subgroup as $unit) {
 								if ($unit != $firstCell && $unit != $secondCell) {
-									$potentialValues = 
-										$unit->getPossibleValues();
-										
-									/*
-									 * If yes, remove pair from 
-									 * remaining cells in row/
-									 * column
-									 */
-									if (in_array($possibleNumber, $potentialValues)) {
-										$unit->removeValue(
-											$potentialValues, 
-											$possibleNumber
-										);
-										$this->checkForSetSquare($unit);
-										$progress = true;
-									}
+									$progress = $this->removeValue(
+										$unit, 
+										$possibleNumber, 
+										$progress
+									);
 								}
 							}
 						}
@@ -1474,22 +1452,11 @@ class SudokuProblemSolver
 
 							foreach ($subgroup as $unit) {
 								if ($unit != $firstCell && $unit != $secondCell) {
-									$potentialValues = 
-										$unit->getPossibleValues();
-										
-									/*
-									 * If yes, remove pair from 
-									 * remaining cells in row/
-									 * column
-									 */
-									if (in_array($possibleNumber, $potentialValues)) {
-										$unit->removeValue(
-											$potentialValues, 
-											$possibleNumber
-										);
-										$this->checkForSetSquare($unit);
-										$progress = true;
-									}
+									$progress = $this->removeValue(
+										$unit, 
+										$possibleNumber, 
+										$progress
+									);
 								}
 							}
 						}
@@ -1497,6 +1464,24 @@ class SudokuProblemSolver
 				}
 			}
 		}
+		return $progress;
+	}
+	
+	/**
+	 * @param object $unit
+	 * @param int $possibleNumber
+	 * @param bool $progress
+	 * @return bool $progress
+	 */
+	public function removeValue($unit, $possibleNumber, $progress) {
+		$potentialValues = $unit->getPossibleValues();
+			
+		if (in_array($possibleNumber, $potentialValues)) {
+			$unit->removeValue($potentialValues, $possibleNumber);
+			$this->checkForSetSquare($unit);
+			$progress = true;
+		}
+		
 		return $progress;
 	}
 }
